@@ -18,3 +18,8 @@ lint:
 .PHONY: run
 run:
 	streamlit run app/app.py
+
+# Clean the app tmp folder
+.PHONY: clean
+clean:
+	@rm -rf tmp/*
