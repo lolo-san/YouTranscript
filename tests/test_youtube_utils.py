@@ -8,8 +8,8 @@ warnings.filterwarnings("ignore", category=DeprecationWarning, module="^pkg_reso
 
 import yt_dlp
 from unittest.mock import patch
-from app.app import fetch_youtube_video_details
-from app.app import fetch_audio_from_youtube
+from app.youtube_utils import fetch_youtube_video_details
+from app.youtube_utils import fetch_audio_from_youtube
 
 def test_get_video_info_success():
     fake_info = {"id": "abc123", "title": "Test Video", "duration": 120}

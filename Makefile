@@ -12,7 +12,7 @@ test:
 .PHONY: lint
 lint: 
 	python3 -m black app
-	pylint app --disable=C,R
+	pylint app --source-roots=app --disable=C,R
 
 # Run the app locally
 .PHONY: run

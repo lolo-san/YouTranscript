@@ -9,7 +9,7 @@ warnings.filterwarnings("ignore", category=DeprecationWarning, module="^pkg_reso
 import numpy as np
 import pytest
 from unittest.mock import patch
-from app.app import convert_audio_to_transcript
+from app.whisperx_utils import convert_audio_to_transcript
 
 @pytest.mark.parametrize("dummy_audio_data", [
     np.random.randn(16000).astype(np.float32),
