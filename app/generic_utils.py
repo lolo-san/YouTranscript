@@ -1,3 +1,13 @@
+from enum import Enum, auto
+
+
+class Stage(Enum):
+    ENTER_URL = auto()
+    EXTRACT_AUDIO = auto()
+    TRANSCRIBE_AUDIO = auto()
+    SHOW_TRANSCRIPT = auto()
+
+
 def human_readable_time(seconds: int) -> str:
     """
     Convert seconds to a human-readable format (HH:MM:SS).
