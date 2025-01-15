@@ -38,17 +38,19 @@ def clear_url():
 
 
 def process_url():
-    youtube_url = st.session_state.url
-    logger = logging.getLogger(__name__)
-    logger.info("Processing URL: %s", youtube_url)
-    info = fetch_youtube_metadata_and_thumbnail(youtube_url)
+    info = fetch_youtube_metadata_and_thumbnail(st.session_state.url)
     if not info:
-        st.error("Failed to fetch metadata. Please try again.")
         return
-    logger.info("Metadata for video %s retrieved successfully.", info.get("id"))
-    info["url"] = youtube_url
     set_session_info(info)
     set_session_stage(Stage.EXTRACT_AUDIO)
+
+
+def session_state_input_url():
+    url = st.text_input(
+        "Enter a YouTube video URL", "", key="url", on_change=process_url
+    )
+    if url:
+        st.rerun()
 
 
 def show_metadata(info: dict):
@@ -61,51 +63,32 @@ def show_metadata(info: dict):
     st.image(info.get("thumbnail"), width=200)
 
 
-def session_state_input_url():
-    url = st.text_input(
-        "Enter a YouTube video URL", "", key="url", on_change=process_url
-    )
-    if url:
-        st.rerun()
-
-
 def session_state_extract_audio():
-    logger = logging.getLogger(__name__)
-    print("session_state_extract_audio")
     info = get_session_info()
     show_metadata(info)
     extract_audio = st.button("Extract audio")
     if not extract_audio:
         return
     with st.spinner("Extracting audio..."):
-        youtube_url = info.get("url")
-        logger.info("Extracting audio from video %s", youtube_url)
-        audio_filename = fetch_youtube_audio_track(youtube_url)
+        audio_filename = fetch_youtube_audio_track(info.get("url"))
         if not audio_filename:
-            logger.error("Failed to extract audio.")
             st.error("Failed to extract audio. Please try again.")
             return
-        logger.info("Audio extracted successfully.")
         info["audio_filename"] = audio_filename
     set_session_stage(Stage.TRANSCRIBE_AUDIO)
     st.rerun()
 
 
 def session_state_transcribe_audio():
-    logger = logging.getLogger(__name__)
     info = get_session_info()
     transcribe_audio = st.button("Transcribe audio")
     if not transcribe_audio:
         return
     with st.spinner("Transcribing audio..."):
-        audio_filename = info.get("audio_filename")
-        logger.info("Transcribing audio from file %s", audio_filename)
-        transcript = convert_audio_to_transcript(audio_filename)
+        transcript = convert_audio_to_transcript(info.get("audio_filename"))
         if not transcript:
-            logger.error("Failed to transcribe audio.")
             st.error("Failed to transcribe audio. Please try again.")
             return
-        logger.info("Audio transcribed successfully.")
         info["transcript"] = transcript
     set_session_stage(Stage.SHOW_TRANSCRIPT)
     st.rerun()
