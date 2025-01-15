@@ -1,6 +1,6 @@
 import streamlit as st
 import logging
-from generic_utils import Stage
+from generic_utils import Stage, human_readable_time
 from youtube_utils import (
     fetch_youtube_metadata_and_thumbnail,
     fetch_youtube_audio_track,
@@ -54,13 +54,14 @@ def session_state_input_url():
 
 
 def show_metadata(info: dict):
-    st.write("Metadata for video:")
-    st.write(f"Title: {info.get('title')}")
-    st.write(f"Uploader: {info.get('uploader')}")
-    st.write(f"Duration: {info.get('duration')} seconds")
-    st.write(f"Description: {info.get('description')}")
-    st.write(f"Language: {info.get('language')}")
-    st.image(info.get("thumbnail"), width=200)
+    st.subheader(info.get("title"))
+    st.image(info.get("thumbnail"), width=720)
+    duration = human_readable_time(info.get("duration"))
+    language = info.get("language")
+    uploader = info.get("uploader")
+    st.write(f"Duration: {duration} | Language: {language} | Uploader: {uploader}")
+    with st.expander("See description"):
+        st.write(info.get("description"))
 
 
 def session_state_extract_audio():
