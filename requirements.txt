@@ -1,0 +1,5 @@
+streamlit
+yt-dlp
+black
+pylint
+pytest
