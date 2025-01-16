@@ -40,7 +40,7 @@ def convert_transcript_to_json_str(transcript: json) -> str:
     return json.dumps(transcript, indent=2, ensure_ascii=False)
 
 
-def convert_transcript_to_plain_text(transcript: json) -> str:
+def convert_transcript_to_plain_text(transcript: json, header: str) -> str:
     """
     Convert WhisperX transcript to plain text.
 
@@ -48,4 +48,4 @@ def convert_transcript_to_plain_text(transcript: json) -> str:
     :return: Plain text transcript
     :rtype: str
     """
-    return "\n".join([seg["text"] for seg in transcript["segments"]])
+    return header + "\n".join([seg["text"] for seg in transcript["segments"]])
