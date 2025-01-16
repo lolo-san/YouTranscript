@@ -28,7 +28,7 @@ def test_convert_audio_to_transcript(mock_load_model, mock_load_audio, dummy_aud
     mock_load_model.return_value = FakeModel()
 
     # Now call your function
-    result_json = convert_audio_to_transcript("fake_audio_file.wav")
+    result_json = convert_audio_to_transcript("fake_audio_file.wav", "cpu", 1, "int8")
 
     assert result_json["segments"][0]["text"] == "Hello World"
     assert result_json["language"] == "en"

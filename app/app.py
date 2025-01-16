@@ -80,13 +80,26 @@ def session_state_extract_audio():
     st.rerun()
 
 
+def show_whisperx_settings():
+    left, middle, right = st.columns(3, vertical_alignment="bottom")
+    device = left.selectbox("Device", options=["cuda", "cpu"])
+    batch_size = middle.selectbox("Batch size", options=["1", "4", "8", "16"], index=1)
+    compute_type = right.selectbox(
+        "Compute type", options=["int8", "float16", "float32"], index=1
+    )
+    return device, batch_size, compute_type
+
+
 def session_state_transcribe_audio():
     info = get_session_info()
+    device, batch_size, compute_type = show_whisperx_settings()
     transcribe_audio = st.button("Transcribe audio")
     if not transcribe_audio:
         return
     with st.spinner("Transcribing audio..."):
-        transcript = convert_audio_to_transcript(info.get("audio_filename"))
+        transcript = convert_audio_to_transcript(
+            info.get("audio_filename"), device, int(batch_size), compute_type
+        )
         if not transcript:
             st.error("Failed to transcribe audio. Please try again.")
             return
