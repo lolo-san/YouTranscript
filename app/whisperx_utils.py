@@ -20,7 +20,9 @@ def convert_audio_to_transcript(
     logger = logging.getLogger(__name__)
     try:
         logger.info("Transcribing audio from file %s", audio_file)
-        model = whisperx.load_model("large-v2", device, compute_type=compute_type, language=language)
+        model = whisperx.load_model(
+            "large-v2", device, compute_type=compute_type, language=language
+        )
         audio = whisperx.load_audio(audio_file)
         result = model.transcribe(audio, language=language, batch_size=batch_size)
         logger.info("Audio transcribed successfully.")
