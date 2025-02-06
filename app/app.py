@@ -100,11 +100,11 @@ def extract_audio_track(url: str) -> str:
 
 
 def transcribe_audio_track(
-    audio_filename: str, device: str, batch_size: int, compute_type: str
+    audio_filename: str, language: str, device: str, batch_size: int, compute_type: str
 ) -> dict:
     with st.spinner("Transcribing audio..."):
         transcript = convert_audio_to_transcript(
-            audio_filename, device, batch_size, compute_type
+            audio_filename, language, device, batch_size, compute_type
         )
         if not transcript:
             st.error("Failed to transcribe audio. Please try again.")
@@ -121,12 +121,13 @@ def delete_audio_track(audio_filename: str):
 def session_state_transcribe_audio():
     info = get_session_info()
     show_video_details(info)
-    url, device, batch_size, compute_type = (
-        info.get(key) for key in ("url", "device", "batch_size", "compute_type")
+    url, language, device, batch_size, compute_type = (
+        info.get(key)
+        for key in ("url", "language", "device", "batch_size", "compute_type")
     )
     file_path = extract_audio_track(url)
     info["transcript"] = transcribe_audio_track(
-        file_path, device, batch_size, compute_type
+        file_path, language, device, batch_size, compute_type
     )
     delete_audio_track(file_path)
     set_session_stage(Stage.VIEW_TRANSCRIPT)
