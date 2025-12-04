@@ -1,16 +1,18 @@
 import streamlit as st
 import logging
 from pathlib import Path
-from generic_utils import Stage, human_readable_time
-from youtube_utils import (
+from .generic_utils import Stage, human_readable_time
+from .youtube_utils import (
     fetch_youtube_metadata_and_thumbnail,
     fetch_youtube_audio_track,
 )
-from whisperx_utils import (
+from .whisperx_utils import (
     convert_audio_to_transcript,
     convert_transcript_to_json_str,
     convert_transcript_to_plain_text,
 )
+
+logger = logging.getLogger(__name__)
 
 
 def set_session_stage(new_stage: Stage):
@@ -26,6 +28,7 @@ def get_session_info() -> dict:
 
 
 def init_session_state():
+    logger.info("Initializing session state")
     if "stage" not in st.session_state:
         st.session_state.stage = Stage.SUBMIT_VIDEO_URL
     if "info" not in st.session_state:
@@ -38,20 +41,32 @@ def clear_url():
     st.session_state["url"] = ""
 
 
-def process_url():
-    info = fetch_youtube_metadata_and_thumbnail(st.session_state.url)
+def process_url(url: str):
+    """Process URL and fetch metadata - called from main flow, not callback"""
+    if not url:
+        return False
+    logger.info("Processing URL: %s", url)
+    info = fetch_youtube_metadata_and_thumbnail(url)
     if not info:
-        return
+        logger.error("Failed to fetch metadata for URL: %s", url)
+        st.error("Failed to fetch video metadata. Please check the URL.")
+        return False
     set_session_info(info)
     set_session_stage(Stage.SUBMIT_MODEL_PARAMS)
+    return True
 
 
 def session_state_input_url():
-    url = st.text_input(
-        "Enter a YouTube video URL", "", key="url", on_change=process_url
-    )
-    if url:
-        st.rerun()
+    url = st.text_input("Enter a YouTube video URL", "", key="url_input")
+
+    if st.button("Load Video"):
+        logger.info("Button clicked, url: %s", url)
+        if url:
+            with st.spinner("Fetching video metadata..."):
+                if process_url(url):
+                    st.rerun()
+        else:
+            st.warning("Please enter a URL first")
 
 
 def show_video_details(info: dict):
@@ -100,11 +115,11 @@ def extract_audio_track(url: str) -> str:
 
 
 def transcribe_audio_track(
-    audio_filename: str, language: str, device: str, batch_size: int, compute_type: str
+    audio_filename: str, device: str, batch_size: int, compute_type: str
 ) -> dict:
     with st.spinner("Transcribing audio..."):
         transcript = convert_audio_to_transcript(
-            audio_filename, language, device, batch_size, compute_type
+            audio_filename, device, batch_size, compute_type
         )
         if not transcript:
             st.error("Failed to transcribe audio. Please try again.")
@@ -121,13 +136,12 @@ def delete_audio_track(audio_filename: str):
 def session_state_transcribe_audio():
     info = get_session_info()
     show_video_details(info)
-    url, language, device, batch_size, compute_type = (
-        info.get(key)
-        for key in ("url", "language", "device", "batch_size", "compute_type")
+    url, device, batch_size, compute_type = (
+        info.get(key) for key in ("url", "device", "batch_size", "compute_type")
     )
     file_path = extract_audio_track(url)
     info["transcript"] = transcribe_audio_track(
-        file_path, language, device, batch_size, compute_type
+        file_path, device, batch_size, compute_type
     )
     delete_audio_track(file_path)
     set_session_stage(Stage.VIEW_TRANSCRIPT)
@@ -168,23 +182,26 @@ def main():
 
     logging.basicConfig(
         level=logging.INFO,
-        format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
+        format="%(levelname)s: %(message)s",
         handlers=[logging.StreamHandler()],
     )
-
     init_session_state()
 
     st.title("TubeScribe")
     st.write("Welcome to TubeScribe! This app transcribes audio from YouTube videos.")
 
-    if st.session_state.stage == Stage.SUBMIT_VIDEO_URL:
-        session_state_input_url()
-    elif st.session_state.stage == Stage.SUBMIT_MODEL_PARAMS:
-        session_state_input_params()
-    elif st.session_state.stage == Stage.TRANSCRIBE_AUDIO:
-        session_state_transcribe_audio()
-    elif st.session_state.stage == Stage.VIEW_TRANSCRIPT:
-        session_state_show_transcript()
-
-
-main()
+    try:
+        if st.session_state.stage == Stage.SUBMIT_VIDEO_URL:
+            logger.info("Stage: SUBMIT_VIDEO_URL")
+            session_state_input_url()
+        elif st.session_state.stage == Stage.SUBMIT_MODEL_PARAMS:
+            logger.info("Stage: SUBMIT_MODEL_PARAMS")
+            session_state_input_params()
+        elif st.session_state.stage == Stage.TRANSCRIBE_AUDIO:
+            logger.info("Stage: TRANSCRIBE_AUDIO")
+            session_state_transcribe_audio()
+        elif st.session_state.stage == Stage.VIEW_TRANSCRIPT:
+            session_state_show_transcript()
+    except Exception as e:
+        logger.exception("Error in main: %s", e)
+        st.error(f"An error occurred: {e}")

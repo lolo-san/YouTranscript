@@ -6,6 +6,8 @@ from pathlib import Path
 TMP_DIR = Path("./tmp")
 TMP_DIR.mkdir(exist_ok=True)
 
+logger = logging.getLogger(__name__)
+
 
 def fetch_youtube_metadata_and_thumbnail(url: str) -> dict:
     """
@@ -22,7 +24,6 @@ def fetch_youtube_metadata_and_thumbnail(url: str) -> dict:
         "writeinfojson": True,
     }
 
-    logger = logging.getLogger(__name__)
     try:
         logger.info("Fetch metadata and thumbnail from YouTube URL: %s", url)
         with yt_dlp.YoutubeDL(ydl_opts) as ydl:
@@ -60,7 +61,6 @@ def fetch_youtube_audio_track(url: str) -> str:
         "quiet": True,
     }
 
-    logger = logging.getLogger(__name__)
     try:
         logger.info("Fetch audio track from YouTube URL %s", url)
         with yt_dlp.YoutubeDL(ydl_opts) as ydl:

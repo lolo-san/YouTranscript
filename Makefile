@@ -1,25 +1,32 @@
-# Install dependencies
-.PHONY: install
+.PHONY: help install sync lint run
+
+# --- Environment setup ---
+
 install:
-	pip install -r requirements.txt
+	@if ! command -v uv >/dev/null 2>&1; then \
+		echo "Installing uv via curl..."; \
+		curl -LsSf https://astral.sh/uv/install.sh | sh; \
+	fi
+	@echo "Installing project dependencies..."
+	uv sync
 
-# Run tests
-.PHONY: test
-test:
-	pytest -v
+sync:
+	@echo "Syncing and upgrading dependencies..."
+	uv sync --upgrade
 
-# Lint the code
-.PHONY: lint
-lint: 
-	python3 -m black app
-	pylint app --source-roots=app --disable=C,R
+# --- Code quality ---
 
-# Run the app locally
-.PHONY: run
+lint:
+	@echo "Linting and formatting code..."
+	uvx black src/
+	uv run pylint src/ --disable=C,R,W0718
+
+# --- Running the application ---
+
+# Path to cuDNN libraries in the virtual environment (required for whisperx/CUDA)
+CUDNN_LIB_PATH := $(shell pwd)/.venv/lib/python3.12/site-packages/nvidia/cudnn/lib
+
 run:
-	streamlit run app/app.py
+	@echo "Running the application..."
+	LD_LIBRARY_PATH=$(CUDNN_LIB_PATH):$$LD_LIBRARY_PATH uv run streamlit run src/youtube-transcript.py
 
-# Clean the app tmp folder
-.PHONY: clean
-clean:
-	@rm -rf tmp/*

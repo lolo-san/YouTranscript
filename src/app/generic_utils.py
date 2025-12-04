@@ -4,7 +4,6 @@ from enum import Enum, auto
 class Stage(Enum):
     SUBMIT_VIDEO_URL = auto()
     SUBMIT_MODEL_PARAMS = auto()
-    # EXTRACT_AUDIO = auto()
     TRANSCRIBE_AUDIO = auto()
     VIEW_TRANSCRIPT = auto()
 

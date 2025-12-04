@@ -1,10 +1,14 @@
+import gc
 import json
 import logging
+import torch
 import whisperx
+
+logger = logging.getLogger(__name__)
 
 
 def convert_audio_to_transcript(
-    audio_file: str, language: str, device: str, batch_size: int, compute_type: str
+    audio_file: str, device: str, batch_size: int, compute_type: str
 ) -> json:
     """
     Transcribe audio using WhisperX.
@@ -17,15 +21,20 @@ def convert_audio_to_transcript(
     :return: Transcription result
     :rtype: json
     """
-    logger = logging.getLogger(__name__)
     try:
         logger.info("Transcribing audio from file %s", audio_file)
-        model = whisperx.load_model(
-            "large-v2", device, compute_type=compute_type, language=language
-        )
+        model = whisperx.load_model("large-v2", device, compute_type=compute_type)
         audio = whisperx.load_audio(audio_file)
-        result = model.transcribe(audio, language=language, batch_size=batch_size)
+        result = model.transcribe(audio, batch_size=batch_size)
         logger.info("Audio transcribed successfully.")
+
+        gc.collect()
+        if torch.cuda.is_available():
+            torch.cuda.empty_cache()
+            torch.cuda.synchronize()
+            del model
+            logger.info("Cleared GPU cache after transcription.")
+
         return result
     except RuntimeError as e:
         logger.error("Failed to transcribe audio: %s", e)
